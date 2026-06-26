@@ -1,74 +1,87 @@
-import ProductCard from '../../features/products/components/ProductCard';
-
-// Data produk bohongan (Mock Data) berdasarkan PDF UdinFresh
-const MOCK_PRODUCTS = [
-  { id: 1, name: 'Tomat Beef Segar', price: 24000, unit: 'kg', rating: 4.9, reviews: 120, icon: '🍅' },
-  { id: 2, name: 'Robusta Coffee Beans', price: 45000, unit: 'kg', rating: 5.0, reviews: 85, icon: '☕' },
-  { id: 3, name: 'Wortel Manis Organik', price: 15000, unit: 'kg', rating: 4.8, reviews: 230, icon: '🥕' },
-  { id: 4, name: 'Bayam Hijau Hidroponik', price: 6000, unit: 'ikat', rating: 4.7, reviews: 310, icon: '🥬' },
-  { id: 5, name: 'Bawang Merah Brebes', price: 35000, unit: 'kg', rating: 4.9, reviews: 145, icon: '🧅' },
-  { id: 6, name: 'Kentang Dieng Super', price: 20000, unit: 'kg', rating: 4.8, reviews: 90, icon: '🥔' },
-  { id: 7, name: 'Cabai Merah Keriting', price: 55000, unit: 'kg', rating: 4.6, reviews: 420, icon: '🌶️' },
-  { id: 8, name: 'Brokoli Segar', price: 18000, unit: 'bonggol', rating: 4.9, reviews: 75, icon: '🥦' },
-];
-
-const CATEGORIES = ['Semua', 'Sayuran', 'Buah-buahan', 'Bumbu Dapur', 'Kopi & Teh', 'Organik'];
+import { useState, useEffect } from 'react';
+import HeroBanner from '../../components/ui/HeroBanner';
+import CategoryGrid from '../../components/ui/CategoryGrid';
+import ProductCardVertical from '../../components/ui/ProductCardVertical';
+import ProductCardHorizontal from '../../components/ui/ProductCardHorizontal';
+import FeatureFooter from '../../components/ui/FeatureFooter';
 
 export default function HomePage() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch products from backend
+    fetch('http://localhost:5000/api/produk')
+      .then(res => res.json())
+      .then(response => {
+        // data API: { success: true, data: rows }
+        setProducts(response.data || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Gagal mengambil data produk", err);
+        setLoading(false);
+      });
+  }, []);
+
   return (
-    <div className="space-y-10 pb-12">
+    <div className="max-w-7xl mx-auto md:py-2">
       
-      {/* 1. HERO SECTION (Banner Utama) */}
-      <section className="bg-gradient-to-r from-emerald-100 to-emerald-50 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 border border-emerald-100">
-        <div className="max-w-xl text-center md:text-left">
-          <h1 className="text-3xl md:text-5xl font-extrabold text-emerald-900 mb-4 leading-tight">
-            Hasil Bumi Segar Langsung ke Depan Pintu Anda
-          </h1>
-          <p className="text-emerald-700 mb-8 text-lg">
-            Panen hari ini, dimasak hari ini. Nikmati sayur, buah, dan kebutuhan dapur berkualitas tinggi dari petani lokal UdinFresh.
-          </p>
-          <button className="bg-emerald-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-emerald-700 hover:shadow-xl transition-all transform hover:-translate-y-0.5">
-            Mulai Belanja 🛒
-          </button>
+      {/* Mobile Search Bar (Only visible on mobile) */}
+      <div className="md:hidden px-4 mt-4 mb-4 relative">
+        <div className="absolute inset-y-0 left-4 pl-3 flex items-center pointer-events-none">
+          <svg className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+          </svg>
         </div>
-        <div className="text-9xl hidden md:block animate-bounce-slow">
-          👨‍🌾
-        </div>
-      </section>
+        <input
+          type="text"
+          className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg bg-white shadow-sm text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          placeholder="Cari sayur, buah, daging..."
+        />
+      </div>
 
-      {/* 2. KATEGORI FILTER */}
-      <section>
-        <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
-          {CATEGORIES.map((cat, index) => (
-            <button 
-              key={cat} 
-              className={`px-5 py-2.5 rounded-full whitespace-nowrap font-semibold transition-colors border ${
-                index === 0 
-                  ? 'bg-emerald-600 text-white border-emerald-600' // Kategori "Semua" aktif
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-500 hover:text-emerald-600'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </section>
+      <HeroBanner />
+      <CategoryGrid />
 
-      {/* 3. GRID PRODUK */}
-      <section>
-        <div className="flex justify-between items-end mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Rekomendasi Hari Ini</h2>
-          <a href="#" className="text-emerald-600 font-semibold hover:underline text-sm">Lihat Semua &rarr;</a>
+      {/* PRODUK TERBARU */}
+      <div className="px-4 md:px-6 mb-8">
+        <div className="flex justify-between items-end mb-4">
+          <h3 className="text-lg md:text-xl font-bold text-gray-900">Produk Terbaru</h3>
+          <a href="#" className="text-emerald-600 text-xs md:text-sm font-semibold hover:underline">Lihat Semua</a>
         </div>
         
-        {/* Grid Responsive: 2 kolom di HP, 3 kolom di Tablet, 4 kolom di PC */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {MOCK_PRODUCTS.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
+        {loading ? (
+          <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div></div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+            {products.slice(0, 6).map((product) => (
+              <ProductCardVertical key={product.id || Math.random()} produk={product} />
+            ))}
+          </div>
+        )}
+      </div>
 
+      {/* PRODUK POPULER */}
+      <div className="px-4 md:px-6 mb-8">
+        <div className="flex justify-between items-end mb-4">
+          <h3 className="text-lg md:text-xl font-bold text-gray-900">Produk Populer</h3>
+          <a href="#" className="text-emerald-600 text-xs md:text-sm font-semibold hover:underline">Lihat Semua</a>
+        </div>
+        
+        {loading ? (
+          <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div></div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            {/* Show slightly different set of products for variety if possible */}
+            {products.slice(0, 4).reverse().map((product) => (
+              <ProductCardHorizontal key={`pop-${product.id || Math.random()}`} produk={product} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <FeatureFooter />
     </div>
   );
 }

@@ -1,24 +1,36 @@
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
+import AdminLayout from '../layouts/AdminLayout';
+
 import HomePage from '../pages/customer/HomePage';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import CartPage from '../pages/customer/CartPage';
 
+import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
+import AdminDataProdukPage from '../pages/admin/AdminDataProdukPage'; // We will create this
+
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* 🥬 Kelompok Halaman Pembeli (Menggunakan MainLayout ada Navbar & Footer) */}
+      {/* 🥬 Kelompok Halaman Pembeli */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/cart" element={<CartPage />} />
       </Route>
 
-      {/* 🔐 Kelompok Halaman Autentikasi (Menggunakan AuthLayout polos kotak di tengah) */}
+      {/* 🔐 Kelompok Halaman Autentikasi */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+      </Route>
+
+      {/* 🛡️ Kelompok Halaman Admin */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboardPage />} />
+        <Route path="produk" element={<AdminDataProdukPage />} />
+        {/* Other routes can be added here later */}
       </Route>
     </Routes>
   );
