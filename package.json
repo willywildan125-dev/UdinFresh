@@ -1,0 +1,29 @@
+{
+  "name": "udinfresh",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "frontend": "cd frontend && npm run dev",
+    "backend": "cd backend && node server.js",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/willywildan125-dev/UdinFresh.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/willywildan125-dev/UdinFresh/issues"
+  },
+  "homepage": "https://github.com/willywildan125-dev/UdinFresh#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  },
+  "dependencies": {
+    "bootstrap-icons": "^1.13.1"
+  }
+}
