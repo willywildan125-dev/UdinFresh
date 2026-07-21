@@ -11,6 +11,7 @@ import ProductDetailPage from '../pages/customer/ProductDetailPage';
 
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminDataProdukPage from '../pages/admin/AdminDataProdukPage'; // We will create this
+import AdminLoginPage from '../pages/admin/AdminLoginPage';
 
 export default function AppRoutes() {
   return (
@@ -29,6 +30,7 @@ export default function AppRoutes() {
       </Route>
 
       {/* 🛡️ Kelompok Halaman Admin */}
+      <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboardPage />} />
         <Route path="produk" element={<AdminDataProdukPage />} />

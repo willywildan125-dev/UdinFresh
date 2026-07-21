@@ -5,6 +5,7 @@ import multer from 'multer';
 import pesananRoutes from './routes/pesananRoutes.js';
 import produkRoutes from './routes/produkRoutes.js'
 import detailPesananRoutes from './routes/detailPesananRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use('/images', express.static('public/images'));
 app.use('/api/pesanan', pesananRoutes);
 app.use('/api/produk', produkRoutes)
 app.use('/api/detail-pesanan', detailPesananRoutes);
+app.use('/api/auth', authRoutes);
 
 // Jalur tes awal di browser
 app.get('/', (req, res) => {
