@@ -8,8 +8,6 @@ export default function AdminLoginPage() {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // If already logged in, redirect to admin dashboard
@@ -18,34 +16,11 @@ export default function AdminLoginPage() {
     }
   }, [navigate]);
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        localStorage.setItem('adminToken', data.token);
-        localStorage.setItem('adminData', JSON.stringify(data.admin));
-        navigate('/admin');
-      } else {
-        setError(data.message || 'Login gagal. Silakan coba lagi.');
-      }
-    } catch (err) {
-      setError('Tidak dapat terhubung ke server. Pastikan backend berjalan.');
-    } finally {
-      setIsLoading(false);
-    }
+    // Gunakan login simulasi (langsung masuk)
+    localStorage.setItem('adminToken', 'true');
+    navigate('/admin');
   };
 
   return (
@@ -83,12 +58,6 @@ export default function AdminLoginPage() {
 
           <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Selamat Datang Kembali</h2>
           <p className="text-gray-500 mb-6 font-medium">Enter your details to access your dashboard.</p>
-
-          {error && (
-            <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-sm font-medium">
-              {error}
-            </div>
-          )}
 
           <form onSubmit={handleLogin} className="space-y-5">
             
@@ -158,15 +127,12 @@ export default function AdminLoginPage() {
             {/* Submit Button */}
             <button 
               type="submit" 
-              disabled={isLoading}
-              className="w-full bg-emerald-600 text-white rounded-xl py-3 px-4 font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-500/30 transition-all shadow-lg shadow-emerald-600/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full bg-emerald-600 text-white rounded-xl py-3 px-4 font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-500/30 transition-all shadow-lg shadow-emerald-600/20 active:scale-[0.98]"
             >
-              {isLoading ? 'Memproses...' : 'Masuk Sekarang'}
-              {!isLoading && (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                </svg>
-              )}
+              Masuk Sekarang
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+              </svg>
             </button>
 
           </form>
