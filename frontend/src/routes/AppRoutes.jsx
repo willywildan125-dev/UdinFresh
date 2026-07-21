@@ -7,6 +7,7 @@ import HomePage from '../pages/customer/HomePage';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import CartPage from '../pages/customer/CartPage';
+import ProductDetailPage from '../pages/customer/ProductDetailPage';
 
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminDataProdukPage from '../pages/admin/AdminDataProdukPage'; // We will create this
@@ -19,6 +20,7 @@ export default function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/cart" element={<CartPage />} />
       </Route>
+      <Route path="/product/:id" element={<ProductDetailPage />} />
 
       {/* 🔐 Kelompok Halaman Autentikasi */}
       <Route element={<AuthLayout />}>

@@ -60,59 +60,58 @@ export default function AdminDataProdukPage() {
     setEditingId(null);
     setFormData({ nama_produk: '', harga: '', stok: '', berat: '', kategori: 'Sayuran' });
     setFoto(null);
-    setMessage({ type: '', text: '' });
-    // Reset file input value if needed via DOM, usually handled by key or ref but for now it's okay
+    // Remove setMessage from here so it doesn't overwrite success messages
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  const formElement = e.target; // simpan referensi form duluan, sebelum apa pun terjadi
-  setLoading(true);
-  setMessage({ type: '', text: '' });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage({ type: '', text: '' });
 
-  if (!formData.nama_produk || !formData.harga || !formData.stok || !formData.berat || (!foto && !editingId)) {
-    setMessage({ type: 'error', text: 'Semua field wajib diisi' + (!editingId ? ' dan foto wajib dilampirkan!' : '!') });
-    setLoading(false);
-    return;
-  }
-
-  const data = new FormData();
-  data.append('nama_produk', formData.nama_produk);
-  data.append('harga', formData.harga);
-  data.append('stok', formData.stok);
-  data.append('berat', formData.berat);
-  data.append('kategori', formData.kategori);
-  if (foto) {
-    data.append('foto_produk', foto);
-  }
-
-  try {
-    const url = editingId
-      ? `http://localhost:5000/api/produk/${editingId}`
-      : 'http://localhost:5000/api/produk';
-
-    const response = await fetch(url, {
-      method: editingId ? 'PUT' : 'POST',
-      body: data,
-    });
-
-    const result = await response.json();
-
-    if (response.ok && result.success) {
-      setMessage({ type: 'success', text: editingId ? 'Produk berhasil diperbarui!' : 'Produk berhasil ditambahkan!' });
-      handleCancelEdit();
-      formElement.reset(); // ✅ pakai referensi yang disimpan di awal, bukan e.target lagi
-      fetchProducts();
-    } else {
-      setMessage({ type: 'error', text: result.message || 'Gagal menyimpan produk.' });
+    if (!formData.nama_produk || !formData.harga || !formData.stok || !formData.berat || (!foto && !editingId)) {
+      setMessage({ type: 'error', text: 'Semua field wajib diisi' + (!editingId ? ' dan foto wajib dilampirkan!' : '!') });
+      setLoading(false);
+      return;
     }
-  } catch (error) {
-    console.error('Error saving product:', error);
-    setMessage({ type: 'error', text: 'Terjadi kesalahan koneksi ke server.' });
-  } finally {
-    setLoading(false);
-  }
-};
+
+    const data = new FormData();
+    data.append('nama_produk', formData.nama_produk);
+    data.append('harga', formData.harga);
+    data.append('stok', formData.stok);
+    data.append('berat', formData.berat);
+    data.append('kategori', formData.kategori);
+    if (foto) {
+      data.append('foto_produk', foto);
+    }
+
+    try {
+      const url = editingId
+        ? `http://localhost:5000/api/produk/${editingId}`
+        : 'http://localhost:5000/api/produk';
+
+      const response = await fetch(url, {
+        method: editingId ? 'PUT' : 'POST',
+        body: data,
+      });
+
+      const responseText = await response.text();
+      console.log('Raw Server Response:', responseText);
+      const result = JSON.parse(responseText);
+
+      if (response.ok && result.success) {
+        handleCancelEdit();
+        setMessage({ type: 'success', text: editingId ? 'Produk berhasil diperbarui!' : 'Produk berhasil ditambahkan!' });
+        fetchProducts();
+      } else {
+        setMessage({ type: 'error', text: result.message || 'Gagal menyimpan produk.' });
+      }
+    } catch (error) {
+      console.error('Error saving product:', error);
+      setMessage({ type: 'error', text: 'Terjadi kesalahan koneksi ke server.' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Apakah Anda yakin ingin menghapus produk ini?")) return;

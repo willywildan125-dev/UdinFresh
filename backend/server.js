@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import multer from 'multer';
 import pesananRoutes from './routes/pesananRoutes.js';
 import produkRoutes from './routes/produkRoutes.js'
 import detailPesananRoutes from './routes/detailPesananRoutes.js';
@@ -23,6 +24,20 @@ app.use('/api/detail-pesanan', detailPesananRoutes);
 // Jalur tes awal di browser
 app.get('/', (req, res) => {
   res.json({ message: "Backend DINFRESH Berjalan Lancar!" });
+});
+
+// Middleware penanganan error global
+app.use((err, req, res, next) => {
+  console.error('Global Error Handler:', err);
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ success: false, message: 'Ukuran file foto terlalu besar (Maksimal 2MB).' });
+    }
+    return res.status(400).json({ success: false, message: err.message });
+  } else if (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+  next();
 });
 
 app.listen(PORT, () => {

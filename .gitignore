@@ -25,3 +25,7 @@ dist-ssr
 
 node_modules/
 .env
+
+# Ignore backend uploaded images
+backend/public/images/*
+!backend/public/images/.gitkeep

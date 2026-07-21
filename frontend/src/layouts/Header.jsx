@@ -1,6 +1,21 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useCart } from '../store/cartStore';
 
 export default function Header() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get('search') || '';
+  const { totalItems } = useCart();
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    if (val) {
+      navigate(`/?search=${val}`);
+    } else {
+      navigate(`/`);
+    }
+  };
+
   return (
     <header className="bg-white border-b border-gray-100 sticky top-0 z-40 hidden md:block shadow-sm">
       <div className="flex items-center justify-between px-8 py-3 h-18 max-w-7xl mx-auto">
@@ -14,6 +29,8 @@ export default function Header() {
           </div>
           <input
             type="text"
+            defaultValue={search}
+            onChange={handleSearchChange}
             className="block w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-xl leading-5 bg-gray-50/50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 sm:text-sm transition-all shadow-inner"
             placeholder="Cari sayur, buah, daging, dan lainnya..."
           />
@@ -28,7 +45,9 @@ export default function Header() {
               <path d="M0 2.5A.5.5 0 0 1 .5 2H2a.5.5 0 0 1 .485.379L2.89 4H14.5a.5.5 0 0 1 .485.621l-1.5 6A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.485-.379L1.61 3H.5a.5.5 0 0 1-.5-.5M3.14 5l1.25 5h8.22l1.25-5zM5 13a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0m9-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0"/>
             </svg>
             Keranjang
-            <span className="bg-rose-500 text-white text-[11px] px-2 py-0.5 rounded-full ml-1 font-bold shadow-sm">2</span>
+            {totalItems > 0 && (
+              <span className="bg-rose-500 text-white text-[11px] px-2 py-0.5 rounded-full ml-1 font-bold shadow-sm">{totalItems}</span>
+            )}
           </Link>
 
           {/* Vertical Divider */}
