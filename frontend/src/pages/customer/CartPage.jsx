@@ -180,6 +180,7 @@ export default function CartPage() {
               </div>
               <button 
                 disabled={totalPrice === 0}
+                onClick={() => totalPrice > 0 && navigate('/checkout')}
                 className={`px-6 py-2.5 rounded-full text-[13px] font-bold shadow-sm transition-colors ${
                   totalPrice > 0 
                     ? 'bg-emerald-600 text-white hover:bg-emerald-700' 

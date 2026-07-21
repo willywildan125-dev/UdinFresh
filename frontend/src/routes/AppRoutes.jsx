@@ -7,6 +7,7 @@ import HomePage from '../pages/customer/HomePage';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import CartPage from '../pages/customer/CartPage';
+import CheckoutPage from '../pages/customer/CheckoutPage';
 import ProductDetailPage from '../pages/customer/ProductDetailPage';
 
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
@@ -20,6 +21,7 @@ export default function AppRoutes() {
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
       </Route>
       <Route path="/product/:id" element={<ProductDetailPage />} />
 
