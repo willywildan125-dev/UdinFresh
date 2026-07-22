@@ -31,7 +31,7 @@ export default function AdminLoginPage() {
           className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
           style={{ backgroundImage: `url('/src/assets/images/banner/sayuran.png')` }}
         ></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/90 via-emerald-900/50 to-transparent"></div>
+        <div className="absolute inset-0 bg-linear-to-t from-emerald-900/90 via-emerald-900/50 to-transparent"></div>
         <div className="relative z-10 flex flex-col justify-end p-16 pb-24 h-full w-full max-w-2xl">
           <h1 className="text-5xl font-bold text-white mb-6 leading-tight">
             Mulai Perjalanan<br/>Segar Anda

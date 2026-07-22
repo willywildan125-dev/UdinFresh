@@ -42,7 +42,7 @@ export const buatPesanan = async (req, res) => {
     // Step 2: Buat pesanan baru
     const [pesananResult] = await connection.query(
       `INSERT INTO pesanan (tanggal_pesanan, status_pesanan, total_berat, id_pembeli) 
-       VALUES (NOW(), 'Menunggu Konfirmasi', ?, ?)`,
+       VALUES (NOW(), 'Menunggu Pembayaran', ?, ?)`,
       [total_berat || 0, id_pembeli]
     );
     const id_pesanan = pesananResult.insertId;
@@ -157,6 +157,67 @@ export const ambilSemuaPesanan = async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM pesanan ORDER BY tanggal_pesanan DESC');
     return res.status(200).json({ success: true, data: rows });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// FUNGSI 4: Membayar Pesanan (Simulasi Pembayaran oleh Customer)
+export const bayarPesanan = async (req, res) => {
+  const { id } = req.params;
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 1. Update status pesanan
+    const [updateResult] = await connection.query(
+      "UPDATE pesanan SET status_pesanan = 'Menunggu Konfirmasi' WHERE id_pesanan = ? AND status_pesanan = 'Menunggu Pembayaran'",
+      [id]
+    );
+
+    if (updateResult.affectedRows === 0) {
+      throw new Error("Pesanan tidak ditemukan atau status tidak valid untuk pembayaran.");
+    }
+
+    // 2. Ambil total dari pesanan
+    const [detailResult] = await connection.query(
+      "SELECT SUM(subtotal) AS total_bayar FROM detail_pesanan WHERE id_pesanan = ?",
+      [id]
+    );
+    const totalBayar = detailResult[0].total_bayar || 0;
+    // Tambah ongkir manual misal 25000 jika dibutuhkan atau biarkan total_bayar sesuai item,
+    // di frontend sudah ada ongkir. Tapi kita simpan total_bayar dari item saja dulu.
+
+    // 3. Masukkan ke tabel pembayaran
+    await connection.query(
+      "INSERT INTO pembayaran (tanggal_bayar, total_bayar, id_pesanan) VALUES (NOW(), ?, ?)",
+      [totalBayar, id]
+    );
+
+    await connection.commit();
+    return res.status(200).json({ success: true, message: "Pembayaran berhasil. Menunggu konfirmasi admin." });
+  } catch (error) {
+    await connection.rollback();
+    return res.status(500).json({ success: false, message: error.message });
+  } finally {
+    connection.release();
+  }
+};
+
+// FUNGSI 5: Mengonfirmasi Pesanan (Oleh Admin)
+export const konfirmasiPesanan = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [updateResult] = await db.query(
+      "UPDATE pesanan SET status_pesanan = 'Diproses' WHERE id_pesanan = ? AND status_pesanan = 'Menunggu Konfirmasi'",
+      [id]
+    );
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(400).json({ success: false, message: "Pesanan tidak ditemukan atau status tidak valid untuk dikonfirmasi." });
+    }
+
+    return res.status(200).json({ success: true, message: "Pesanan berhasil dikonfirmasi dan sedang diproses." });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

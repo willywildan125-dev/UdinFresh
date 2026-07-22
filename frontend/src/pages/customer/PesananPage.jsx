@@ -5,6 +5,8 @@ const API_URL = 'http://localhost:5000';
 
 const TABS = [
   { id: 'semua',      label: 'Semua' },
+  { id: 'belum_bayar',label: 'Belum Bayar' },
+  { id: 'menunggu_konfirmasi', label: 'Menunggu Konfirmasi' },
   { id: 'diproses',   label: 'Diproses' },
   { id: 'dikirim',    label: 'Dikirim' },
   { id: 'selesai',    label: 'Selesai' },
@@ -13,7 +15,9 @@ const TABS = [
 
 // Mapping status dari DB ke key tab
 const STATUS_MAP = {
-  'Menunggu Konfirmasi': 'diproses',
+  'Menunggu Pembayaran': 'belum_bayar',
+  'Menunggu Konfirmasi': 'menunggu_konfirmasi',
+  'Diproses':            'diproses',
   'Sedang Diproses':     'diproses',
   'Sedang Dikirim':      'dikirim',
   'Dikirim':             'dikirim',
@@ -22,6 +26,8 @@ const STATUS_MAP = {
 };
 
 const STATUS_STYLE = {
+  belum_bayar: { label: 'Belum Bayar', bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
+  menunggu_konfirmasi: { label: 'Menunggu Konfirmasi', bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
   diproses:   { label: 'Sedang Diproses', bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400' },
   dikirim:    { label: 'Sedang Dikirim',  bg: 'bg-blue-50',    text: 'text-blue-700',    dot: 'bg-blue-400' },
   selesai:    { label: 'Selesai',         bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
@@ -45,7 +51,7 @@ function StatusBadge({ statusKey }) {
   );
 }
 
-function OrderCard({ order, statusKey, onDetail }) {
+function OrderCard({ order, statusKey, onDetail, onPay }) {
   const firstItem = order.items[0];
   const extraCount = order.items.length - 1;
   const totalPayment = order.items.reduce((sum, i) => sum + i.subtotal, 0);
@@ -108,6 +114,14 @@ function OrderCard({ order, statusKey, onDetail }) {
           >
             Lihat Detail
           </button>
+          {statusKey === 'belum_bayar' && (
+            <button 
+              onClick={() => onPay(order.id_pesanan)}
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+            >
+              Bayar Sekarang
+            </button>
+          )}
           {statusKey === 'selesai' && (
             <button className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
               Beli Lagi
@@ -212,10 +226,9 @@ export default function PesananPage() {
   const [error, setError] = useState(null);
   const [detailOrder, setDetailOrder] = useState(null);
 
-  useEffect(() => {
+  const fetchOrders = () => {
     const noHp = localStorage.getItem('udinfresh_user_phone');
     if (!noHp) {
-      // Belum pernah checkout → tampilkan kosong
       setLoading(false);
       return;
     }
@@ -231,7 +244,28 @@ export default function PesananPage() {
       })
       .catch(() => setError('Gagal memuat pesanan. Pastikan server berjalan.'))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchOrders();
   }, []);
+
+  const handlePay = async (id_pesanan) => {
+    try {
+      const res = await fetch(`${API_URL}/api/pesanan/${id_pesanan}/bayar`, {
+        method: 'PUT'
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Pembayaran berhasil disimulasikan!');
+        fetchOrders();
+      } else {
+        alert(`Gagal: ${data.message}`);
+      }
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  };
 
   // Tambahkan statusKey ke tiap order
   const ordersWithKey = orders.map((o) => ({
@@ -335,6 +369,7 @@ export default function PesananPage() {
               order={order}
               statusKey={order.statusKey}
               onDetail={(o) => setDetailOrder(o)}
+              onPay={handlePay}
             />
           ))
         )}
