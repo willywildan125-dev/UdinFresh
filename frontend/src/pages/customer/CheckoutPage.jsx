@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../../store/cartStore';
+import { useCart, cartActions } from '../../store/cartStore';
+
+const API_URL = 'http://localhost:5000';
 
 const SHIPPING_COST = 25000;
 
@@ -90,11 +92,46 @@ export default function CheckoutPage() {
     }
 
     setIsSubmitting(true);
-    // Simulate order submission
-    await new Promise((r) => setTimeout(r, 1200));
-    setIsSubmitting(false);
-    alert('Pesanan berhasil dibuat! 🎉');
-    navigate('/');
+    try {
+      // Siapkan payload sesuai struktur backend
+      const items = selectedItems.map((item) => ({
+        id_produk: item.productId,
+        jumlah: item.quantity,
+        subtotal: item.price * item.quantity,
+      }));
+
+      const payload = {
+        nama_pembeli: form.fullName,
+        no_hp: form.phone,
+        nama_toko: form.storeName || '',
+        items,
+        total_berat: totalWeight,
+      };
+
+      const res = await fetch(`${API_URL}/api/pesanan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Gagal membuat pesanan.');
+      }
+
+      // Simpan no_hp ke localStorage agar PesananPage bisa fetch pesanan milik user ini
+      localStorage.setItem('udinfresh_user_phone', form.phone);
+
+      // Hapus item yang sudah di-checkout dari keranjang
+      selectedItems.forEach((item) => cartActions.removeItem(item.cartItemId));
+
+      navigate('/pesanan');
+    } catch (err) {
+      alert(`Gagal: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (selectedItems.length === 0) {

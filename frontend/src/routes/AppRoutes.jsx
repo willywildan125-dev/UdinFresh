@@ -8,6 +8,8 @@ import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import CartPage from '../pages/customer/CartPage';
 import CheckoutPage from '../pages/customer/CheckoutPage';
+import KategoriPage from '../pages/customer/KategoriPage';
+import PesananPage from '../pages/customer/PesananPage';
 import ProductDetailPage from '../pages/customer/ProductDetailPage';
 
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
@@ -22,6 +24,8 @@ export default function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/kategori" element={<KategoriPage />} />
+        <Route path="/pesanan" element={<PesananPage />} />
       </Route>
       <Route path="/product/:id" element={<ProductDetailPage />} />
 
