@@ -16,6 +16,7 @@ import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminDataProdukPage from '../pages/admin/AdminDataProdukPage'; // We will create this
 import AdminOrdersPage from '../pages/admin/AdminOrdersPage';
 import AdminLoginPage from '../pages/admin/AdminLoginPage';
+import AdminSuratJalanPage from '../pages/admin/AdminSuratJalanPage';
 
 export default function AppRoutes() {
   return (
@@ -42,6 +43,7 @@ export default function AppRoutes() {
         <Route index element={<AdminDashboardPage />} />
         <Route path="produk" element={<AdminDataProdukPage />} />
         <Route path="pesanan" element={<AdminOrdersPage />} />
+        <Route path="surat-jalan" element={<AdminSuratJalanPage />} />
         {/* Other routes can be added here later */}
       </Route>
     </Routes>

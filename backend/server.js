@@ -7,6 +7,7 @@ import produkRoutes from './routes/produkRoutes.js'
 import detailPesananRoutes from './routes/detailPesananRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import suratJalanRoutes from './routes/suratJalanRoutes.js';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use('/api/produk', produkRoutes)
 app.use('/api/detail-pesanan', detailPesananRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/surat-jalan', suratJalanRoutes);
 
 // Jalur tes awal di browser
 app.get('/', (req, res) => {

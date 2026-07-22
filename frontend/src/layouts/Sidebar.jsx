@@ -41,16 +41,6 @@ export default function Sidebar() {
         </svg>
       ) 
     },
-    { 
-      name: 'Promo', 
-      path: '/promo', 
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="bi bi-ticket-perforated" viewBox="0 0 16 16">
-          <path d="M4 4.85v.9h1v-.9H4Zm7 0v.9h1v-.9h-1Zm-7 1.8v.9h1v-.9H4Zm7 0v.9h1v-.9h-1Zm-7 1.8v.9h1v-.9H4Zm7 0v.9h1v-.9h-1Zm-7 1.8v.9h1v-.9H4Zm7 0v.9h1v-.9h-1Z"/>
-          <path d="M1.5 3A1.5 1.5 0 0 0 0 4.5V6a.5.5 0 0 0 .5.5 1.5 1.5 0 1 1 0 3 .5.5 0 0 0-.5.5v1.5A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5V10a.5.5 0 0 0-.5-.5 1.5 1.5 0 0 1 0-3A.5.5 0 0 0 16 6V4.5A1.5 1.5 0 0 0 14.5 3h-13ZM1 4.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v1.05a2.5 2.5 0 0 0 0 4.9v1.05a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-1.05a2.5 2.5 0 0 0 0-4.9V4.5Z"/>
-        </svg>
-      ) 
-    },
   ];
 
   return (
@@ -93,22 +83,6 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Promo Banner */}
-      <div className="p-4 mt-auto shrink-0 border-t border-gray-50">
-        <div className="bg-emerald-600 rounded-xl p-4 text-center text-white relative overflow-hidden shadow-lg shadow-emerald-500/20">
-          <div className="absolute top-0 right-0 -mr-4 -mt-4 w-16 h-16 bg-white opacity-10 rounded-full blur-xl"></div>
-          <div className="mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mx-auto opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-            </svg>
-          </div>
-          <h4 className="font-bold text-lg mb-1">Gratis Ongkir</h4>
-          <p className="text-[10px] text-emerald-100 mb-3 opacity-90">Min. belanja Rp50.000</p>
-          <button className="w-full bg-white text-emerald-600 text-xs font-bold py-2 rounded-lg hover:bg-emerald-50 transition-colors">
-            Belanja Sekarang
-          </button>
-        </div>
-      </div>
     </aside>
   );
 }
