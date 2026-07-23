@@ -294,56 +294,97 @@ export default function CheckoutPage() {
                 {PAYMENT_METHODS.map((method) => {
                   const isActive = paymentMethod === method.id;
                   return (
-                    <label
-                      key={method.id}
-                      htmlFor={`pay-${method.id}`}
-                      className={`flex items-center gap-3 py-3.5 cursor-pointer rounded-lg px-3 -mx-3 transition-colors ${
-                        isActive ? 'bg-emerald-50' : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      {/* Radio */}
-                      <input
-                        type="radio"
-                        id={`pay-${method.id}`}
-                        name="paymentMethod"
-                        value={method.id}
-                        checked={isActive}
-                        onChange={() => setPaymentMethod(method.id)}
-                        className="hidden"
-                      />
-                      {/* Custom radio circle */}
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                          isActive ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
+                    <div key={method.id} className="py-2">
+                      <label
+                        htmlFor={`pay-${method.id}`}
+                        className={`flex items-center gap-3 py-3.5 cursor-pointer rounded-lg px-3 -mx-3 transition-colors ${
+                          isActive ? 'bg-emerald-50' : 'hover:bg-gray-50'
                         }`}
                       >
-                        {isActive && (
-                          <div className="w-2 h-2 rounded-full bg-white" />
-                        )}
-                      </div>
+                        {/* Radio */}
+                        <input
+                          type="radio"
+                          id={`pay-${method.id}`}
+                          name="paymentMethod"
+                          value={method.id}
+                          checked={isActive}
+                          onChange={() => setPaymentMethod(method.id)}
+                          className="hidden"
+                        />
+                        {/* Custom radio circle */}
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                            isActive ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
+                          }`}
+                        >
+                          {isActive && (
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          )}
+                        </div>
 
-                      {/* Icon */}
-                      <div
-                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                          isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
-                        }`}
-                      >
-                        {method.icon}
-                      </div>
+                        {/* Icon */}
+                        <div
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                            isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                          }`}
+                        >
+                          {method.icon}
+                        </div>
 
-                      {/* Label & Desc */}
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-semibold leading-tight ${isActive ? 'text-emerald-800' : 'text-gray-800'}`}>
-                          {method.label}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-0.5">{method.description}</p>
-                      </div>
+                        {/* Label & Desc */}
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-semibold leading-tight ${isActive ? 'text-emerald-800' : 'text-gray-800'}`}>
+                            {method.label}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">{method.description}</p>
+                        </div>
 
-                      {/* Right arrow */}
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </label>
+                        {/* Right arrow */}
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 text-gray-400 shrink-0 transition-transform ${isActive ? 'rotate-90 text-emerald-500' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </label>
+                      
+                      {/* Payment Method Details Expand */}
+                      {isActive && (
+                        <div className="pl-14 pr-3 py-4 text-sm bg-emerald-50/40 rounded-b-lg -mx-3 -mt-2 mb-1 border-t border-emerald-100/50">
+                          {method.id === 'transfer_bank' && (
+                            <div className="space-y-3">
+                              <p className="font-semibold text-emerald-800">Transfer ke salah satu rekening berikut:</p>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
+                                  <p className="font-bold text-gray-800 flex justify-between">BCA <span className="font-mono text-emerald-700">1234567890</span></p>
+                                  <p className="text-xs text-gray-500 mt-1">a.n. Udin Fresh</p>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
+                                  <p className="font-bold text-gray-800 flex justify-between">Mandiri <span className="font-mono text-emerald-700">0987654321</span></p>
+                                  <p className="text-xs text-gray-500 mt-1">a.n. Udin Fresh</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {method.id === 'qris' && (
+                            <div className="flex flex-col items-center justify-center space-y-3 py-2">
+                              <p className="font-semibold text-emerald-800">Scan QR Code ini untuk membayar:</p>
+                              <div className="bg-white p-3 rounded-xl border border-emerald-200 shadow-sm inline-block">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QRIS UdinFresh" className="w-40 h-40 object-contain mx-auto" />
+                              </div>
+                              <p className="text-xs text-emerald-600/80 text-center max-w-xs">Buka aplikasi e-wallet (OVO, GoPay, Dana) atau m-banking Anda, lalu scan QR di atas.</p>
+                            </div>
+                          )}
+                          {method.id === 'cod' && (
+                            <div className="bg-white p-3.5 rounded-lg border border-emerald-200 shadow-sm flex gap-3 items-start">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <p className="text-gray-700 text-sm leading-relaxed">
+                                Anda akan membayar secara tunai kepada kurir saat pesanan tiba di alamat Anda. Mohon siapkan uang pas sebesar <span className="font-bold text-emerald-700">Rp {totalPayment.toLocaleString('id-ID')}</span>.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>

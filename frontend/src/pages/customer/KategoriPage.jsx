@@ -16,8 +16,8 @@ export default function KategoriPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-
+  
+  const search = searchParams.get('search') || '';
   const activeCategory = searchParams.get('cat') || 'Semua';
 
   useEffect(() => {
@@ -66,21 +66,7 @@ export default function KategoriPage() {
           <h1 className="text-base font-bold text-gray-900">Kategori</h1>
         </div>
 
-        {/* Search bar */}
-        <div className="px-4 pb-3 relative">
-          <div className="absolute inset-y-0 left-4 pl-3 flex items-center pointer-events-none">
-            <svg className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari produk..."
-            className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
-          />
-        </div>
+
 
         {/* Category chips — horizontal scroll */}
         <div className="flex gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide">
