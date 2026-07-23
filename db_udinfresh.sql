@@ -76,6 +76,17 @@ CREATE TABLE `mobil` (
   `type_mobil` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `mobil`
+--
+
+INSERT INTO `mobil` (`nopol`, `type_mobil`) VALUES
+('B 1234 UDF', 'Box Carry'),
+('D 5678 UDF', 'Pick Up L300'),
+('B 9012 UDF', 'Blind Van GranMax'),
+('D 3456 UDF', 'Box Engkel'),
+('B 7890 UDF', 'Pick Up Carry');
+
 -- --------------------------------------------------------
 
 --
@@ -180,7 +191,11 @@ CREATE TABLE `supir` (
 
 CREATE TABLE `surat_jalan` (
   `id_surat_jalan` int(11) NOT NULL,
-  `id_admin` int(11) DEFAULT NULL
+  `id_admin` int(11) DEFAULT NULL,
+  `id_pesanan` int(11) NOT NULL,
+  `id_supir` int(11) NOT NULL,
+  `no_surat_jalan` varchar(50) NOT NULL,
+  `tanggal_dibuat` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --

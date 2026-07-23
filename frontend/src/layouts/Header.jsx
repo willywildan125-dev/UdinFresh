@@ -1,18 +1,31 @@
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useCart } from '../store/cartStore';
 
 export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const search = searchParams.get('search') || '';
   const { totalItems } = useCart();
 
   const handleSearchChange = (e) => {
     const val = e.target.value;
-    if (val) {
-      navigate(`/?search=${val}`);
+    const currentPath = location.pathname;
+
+    if (currentPath === '/kategori') {
+      const newParams = new URLSearchParams(searchParams);
+      if (val) {
+        newParams.set('search', val);
+      } else {
+        newParams.delete('search');
+      }
+      navigate(`/kategori?${newParams.toString()}`);
     } else {
-      navigate(`/`);
+      if (val) {
+        navigate(`/?search=${encodeURIComponent(val)}`);
+      } else {
+        navigate(`/`);
+      }
     }
   };
 
@@ -29,10 +42,10 @@ export default function Header() {
           </div>
           <input
             type="text"
-            defaultValue={search}
+            value={search}
             onChange={handleSearchChange}
             className="block w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-xl leading-5 bg-gray-50/50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 sm:text-sm transition-all shadow-inner"
-            placeholder="Cari sayur, buah, daging, dan lainnya..."
+            placeholder={location.pathname === '/kategori' ? 'Cari dalam kategori...' : 'Cari sayur, buah, daging, dan lainnya...'}
           />
         </div>
 
