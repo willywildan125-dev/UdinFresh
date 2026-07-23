@@ -9,6 +9,18 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState('1 kg');
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [toastMessage, setToastMessage] = useState('');
+  const [addedToCartSuccess, setAddedToCartSuccess] = useState(false);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage('');
+    }, 2500);
+  };
 
   useEffect(() => {
     // Scroll to top when loaded
@@ -26,7 +38,7 @@ export default function ProductDetailPage() {
         if (response.success) {
           setProduct(response.data);
         } else {
-          // If the individual endpoint doesn't exist yet, we can fallback to fetching all and filtering
+          // Fallback to fetching all products
           return fetch('http://localhost:5000/api/produk')
             .then(res => res.json())
             .then(allRes => {
@@ -37,7 +49,6 @@ export default function ProductDetailPage() {
       })
       .catch((err) => {
         console.error('Error fetching product, trying fallback:', err);
-        // Fallback for missing backend endpoint
         fetch('http://localhost:5000/api/produk')
           .then(res => res.json())
           .then(allRes => {
@@ -52,7 +63,11 @@ export default function ProductDetailPage() {
   }, [id]);
 
   const handleBack = () => {
-    navigate(-1);
+    if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
   };
 
   const handleDecrease = () => {
@@ -60,13 +75,55 @@ export default function ProductDetailPage() {
   };
 
   const handleIncrease = () => {
-    // In reality, might want to check against stock
-    setQuantity(q => q + 1);
+    const maxStock = product?.stok ?? 99;
+    if (quantity < maxStock) {
+      setQuantity(q => q + 1);
+    } else {
+      showToast(`Stok maksimal tercapai (${maxStock})`);
+    }
   };
 
   const handleAddToCart = () => {
+    if (!product) return;
     cartActions.addToCart(product, quantity, selectedWeight);
-    // Optional: show a small toast or visual feedback here
+    setAddedToCartSuccess(true);
+    showToast(`🛒 ${quantity}x ${product.nama_produk} dimasukkan ke keranjang`);
+    setTimeout(() => setAddedToCartSuccess(false), 2000);
+  };
+
+  const handleBuyNow = () => {
+    if (!product) return;
+    cartActions.addToCart(product, quantity, selectedWeight);
+    navigate('/checkout');
+  };
+
+  const handleToggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+    showToast(!isFavorite ? '❤️ Berhasil ditambahkan ke Favorit' : '💔 Dihapus dari Favorit');
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product?.nama_produk || 'Produk UdinFresh',
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.log('Share canceled', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast('🔗 Tautan produk disalin ke clipboard');
+      } catch {
+        showToast('Tautan: ' + window.location.href);
+      }
+    }
+  };
+
+  const handleVisitStore = () => {
+    navigate('/kategori');
   };
 
   if (loading) {
@@ -86,48 +143,74 @@ export default function ProductDetailPage() {
     );
   }
 
-  const image = product.foto_produk ? `http://localhost:5000/images/${product.foto_produk}` : 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80&w=800'; // Fallback to a nice tomato image just in case
+  const baseImage = product.foto_produk ? `http://localhost:5000/images/${product.foto_produk}` : 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80&w=800';
   const name = product.nama_produk || 'Produk Tanpa Nama';
   const price = product.harga || 0;
   
-  // Mock data for things not in standard product schema
   const ulasan = 120;
   const rating = 4.9;
-  const stockStatus = product.stok > 0 ? 'Tersedia' : 'Habis';
+  const stockStatus = (product.stok ?? 10) > 0 ? `${product.stok ?? 10} kg` : 'Habis';
   
   const weights = ['1 kg', '2 kg', '5 kg', '10 kg'];
+  const gallery = [baseImage, baseImage, baseImage];
+
+  const fullDescription = product.deskripsi || `${name} pilihan, dipanen langsung dari petani lokal. Memiliki kualitas unggul, kesegaran terjamin, dan tanpa bahan pengawet. Sangat cocok untuk kebutuhan memasak sehari-hari keluarga Anda. Diolah dan dikemas secara hiegenis untuk menjaga kebersihan dan kesegaran nutrisinya.`;
 
   return (
     <div className="min-h-screen bg-gray-50 md:py-6 flex justify-center">
       
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-gray-900/90 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 animate-bounce">
+          {toastMessage}
+        </div>
+      )}
+
       {/* Mobile-like container that centers on desktop */}
       <div className="w-full max-w-[500px] md:max-w-[800px] bg-white md:rounded-2xl md:shadow-lg overflow-hidden relative pb-24 md:pb-28">
         
         {/* Header */}
-        <header className="absolute top-0 left-0 right-0 z-40 bg-white px-4 py-3 flex items-center justify-between">
-          <button onClick={handleBack} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
+        <header className="absolute top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-gray-100/50">
+          <button onClick={handleBack} aria-label="Kembali" className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>
-          <h1 className="text-sm font-bold text-gray-900 absolute left-1/2 -translate-x-1/2">
+          <h1 className="text-sm font-bold text-gray-900">
             Detail Produk
           </h1>
-          <div className="w-7"></div>
+          <div className="flex items-center gap-1">
+            <button onClick={handleToggleFavorite} aria-label="Favorit" className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${isFavorite ? 'text-red-500 fill-current' : 'text-gray-600'}`} fill={isFavorite ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+            <button onClick={handleShare} aria-label="Bagikan" className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </button>
+          </div>
         </header>
 
         {/* Product Image Slider */}
         <div className="relative aspect-square md:aspect-[16/9] w-full bg-gray-100 mt-12 md:mt-14">
           <img 
-            src={image} 
+            src={gallery[activeImageIndex]} 
             alt={name} 
-            className="w-full h-full object-cover" 
+            className="w-full h-full object-cover transition-opacity duration-300" 
           />
           {/* Slider Dots */}
           <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-1.5 z-20">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-white/70"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-white/70"></div>
+            {gallery.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setActiveImageIndex(index)}
+                className={`h-2 rounded-full transition-all duration-200 ${
+                  activeImageIndex === index ? 'w-5 bg-emerald-500' : 'w-2 bg-white/70 hover:bg-white'
+                }`}
+              />
+            ))}
           </div>
         </div>
 
@@ -152,15 +235,15 @@ export default function ProductDetailPage() {
 
           {/* Rating & Stock */}
           <div className="flex items-center text-[11px] text-gray-500 mb-5 pb-5 border-b border-gray-100">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-amber-400 fill-current mr-1" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
-            <span className="mr-2">{rating} ({ulasan} ulasan)</span>
+            <span className="mr-2 font-semibold text-gray-700">{rating} <span className="font-normal text-gray-500">({ulasan} ulasan)</span></span>
             <span className="text-gray-300 mx-1.5">•</span>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            <span>Stok: <span className="font-semibold text-gray-800">{stockStatus}</span></span>
+            <span>Stok: <span className="font-semibold text-emerald-600">{stockStatus}</span></span>
           </div>
 
           {/* Pilih Berat */}
@@ -171,10 +254,10 @@ export default function ProductDetailPage() {
                 <button 
                   key={w}
                   onClick={() => setSelectedWeight(w)}
-                  className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-colors border ${
+                  className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
                     selectedWeight === w 
-                      ? 'border-emerald-600 bg-emerald-50/30 text-emerald-700' 
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-sm' 
+                      : 'border-gray-200 text-gray-600 hover:border-emerald-300'
                   }`}
                 >
                   {w}
@@ -186,12 +269,20 @@ export default function ProductDetailPage() {
           {/* Deskripsi Produk */}
           <div className="mb-8">
             <h3 className="text-[13px] font-bold text-gray-900 mb-2">Deskripsi Produk</h3>
-            <p className="text-[11px] text-gray-500 leading-relaxed mb-1.5">
-              {product.deskripsi || `${name} pilihan, dipanen langsung dari petani lokal. Memiliki daging buah yang tebal, sedikit biji, dan rasa yang manis segar. Cocok untuk salad, sandwich, atau diolah menjadi saus premium.`}
+            <p className={`text-[11px] text-gray-500 leading-relaxed mb-1.5 transition-all ${!isDescExpanded ? 'line-clamp-3' : ''}`}>
+              {fullDescription}
             </p>
-            <button className="text-emerald-600 text-[10px] font-bold flex items-center hover:text-emerald-700">
-              Baca Selengkapnya
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+            <button 
+              onClick={() => setIsDescExpanded(!isDescExpanded)}
+              className="text-emerald-600 text-[10px] font-bold flex items-center hover:text-emerald-700 transition-colors"
+            >
+              {isDescExpanded ? 'Sembunyikan' : 'Baca Selengkapnya'}
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`h-3 w-3 ml-0.5 transition-transform duration-200 ${isDescExpanded ? 'rotate-180' : ''}`} 
+                viewBox="0 0 20 20" 
+                fill="currentColor"
+              >
                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </button>
@@ -214,7 +305,10 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             </div>
-            <button className="px-3 py-1.5 border border-emerald-600 text-emerald-600 text-[10px] font-bold rounded-lg hover:bg-emerald-50 transition-colors">
+            <button 
+              onClick={handleVisitStore}
+              className="px-3 py-1.5 border border-emerald-600 text-emerald-600 text-[10px] font-bold rounded-lg hover:bg-emerald-50 active:scale-95 transition-all"
+            >
               Kunjungi
             </button>
           </div>
@@ -228,16 +322,17 @@ export default function ProductDetailPage() {
             <div className="flex items-center border border-gray-200 rounded-lg shrink-0 h-10 bg-white">
               <button 
                 onClick={handleDecrease}
-                className="w-9 h-full flex items-center justify-center text-gray-600 hover:bg-gray-50 rounded-l-lg"
+                disabled={quantity <= 1}
+                className="w-9 h-full flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-transparent rounded-l-lg transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                 </svg>
               </button>
-              <span className="w-6 text-center font-bold text-gray-800 text-[13px]">{quantity}</span>
+              <span className="w-7 text-center font-bold text-gray-800 text-[13px]">{quantity}</span>
               <button 
                 onClick={handleIncrease}
-                className="w-9 h-full flex items-center justify-center text-emerald-600 hover:bg-emerald-50 rounded-r-lg"
+                className="w-9 h-full flex items-center justify-center text-emerald-600 hover:bg-emerald-50 rounded-r-lg transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -248,11 +343,18 @@ export default function ProductDetailPage() {
             {/* Action Buttons */}
             <button 
               onClick={handleAddToCart}
-              className="flex-1 border border-emerald-600 text-emerald-600 font-bold text-[12px] h-10 rounded-lg flex items-center justify-center hover:bg-emerald-50 transition-colors"
+              className={`flex-1 font-bold text-[12px] h-10 rounded-lg flex items-center justify-center transition-all ${
+                addedToCartSuccess 
+                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-500'
+                  : 'border border-emerald-600 text-emerald-600 hover:bg-emerald-50 active:scale-98'
+              }`}
             >
-              + Keranjang
+              {addedToCartSuccess ? '✓ Ditambahkan' : '+ Keranjang'}
             </button>
-            <button className="flex-1 bg-[#047857] text-white font-bold text-[12px] h-10 rounded-lg flex items-center justify-center hover:bg-emerald-800 transition-colors">
+            <button 
+              onClick={handleBuyNow}
+              className="flex-1 bg-[#047857] text-white font-bold text-[12px] h-10 rounded-lg flex items-center justify-center hover:bg-emerald-800 active:scale-98 transition-all shadow-sm"
+            >
               Beli Sekarang
             </button>
           </div>

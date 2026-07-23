@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { cartActions } from '../../store/cartStore';
+import ProductCardVertical from '../../components/ui/ProductCardVertical';
 
 const CATEGORIES = [
   { name: 'Semua',   icon: '🛒', color: 'bg-gray-100 text-gray-700' },
@@ -10,56 +10,6 @@ const CATEGORIES = [
   { name: 'Seafood', icon: '🐟', color: 'bg-blue-50 text-blue-700' },
   { name: 'Bumbu',   icon: '🧅', color: 'bg-yellow-50 text-yellow-700' },
 ];
-
-function ProductCard({ produk }) {
-  const navigate = useNavigate();
-  const [added, setAdded] = useState(false);
-
-  const imageUrl = produk.foto_produk
-    ? `http://localhost:5000/images/${produk.foto_produk}`
-    : 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800';
-
-  const handleAdd = (e) => {
-    e.stopPropagation();
-    cartActions.addToCart(produk, 1, '1 kg');
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
-  };
-
-  return (
-    <div
-      onClick={() => navigate(`/product/${produk.id_produk}`)}
-      className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
-    >
-      <div className="aspect-square overflow-hidden bg-gray-50">
-        <img
-          src={imageUrl}
-          alt={produk.nama_produk}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-      </div>
-      <div className="p-3">
-        <p className="text-[12px] text-gray-400 mb-0.5 capitalize">{produk.kategori || 'Lainnya'}</p>
-        <h3 className="text-[13px] font-bold text-gray-800 line-clamp-2 leading-snug mb-2">
-          {produk.nama_produk}
-        </h3>
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-extrabold text-emerald-600">
-            Rp {produk.harga?.toLocaleString('id-ID')}
-          </span>
-          <button
-            onClick={handleAdd}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 text-white text-lg leading-none ${
-              added ? 'bg-emerald-400 scale-95' : 'bg-emerald-600 hover:bg-emerald-700 active:scale-90'
-            }`}
-          >
-            {added ? '✓' : '+'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function KategoriPage() {
   const navigate = useNavigate();
@@ -155,21 +105,21 @@ export default function KategoriPage() {
       </div>
 
       {/* Results */}
-      <div className="px-4 py-4 max-w-5xl mx-auto">
+      <div className="px-4 py-4 max-w-7xl mx-auto">
         {/* Count */}
         <p className="text-xs text-gray-400 mb-3 font-medium">
           {loading ? 'Memuat...' : `${filtered.length} produk ditemukan`}
         </p>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden animate-pulse">
-                <div className="aspect-square bg-gray-100" />
-                <div className="p-3 space-y-2">
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
-                  <div className="h-4 bg-gray-100 rounded w-3/4" />
-                  <div className="h-4 bg-gray-100 rounded w-1/3" />
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse p-3">
+                <div className="aspect-4/3 bg-gray-100 rounded-xl mb-3" />
+                <div className="space-y-2">
+                  <div className="h-3 bg-gray-100 rounded w-3/4" />
+                  <div className="h-2 bg-gray-100 rounded w-1/2" />
+                  <div className="h-4 bg-gray-100 rounded w-1/3 mt-2" />
                 </div>
               </div>
             ))}
@@ -181,9 +131,9 @@ export default function KategoriPage() {
             <p className="text-sm text-gray-400">Coba kata kunci atau kategori lain</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
             {filtered.map((p) => (
-              <ProductCard key={p.id_produk} produk={p} />
+              <ProductCardVertical key={p.id_produk} produk={p} />
             ))}
           </div>
         )}

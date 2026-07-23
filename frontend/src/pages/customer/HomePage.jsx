@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import HeroBanner from '../../components/ui/HeroBanner';
-import CategoryGrid from '../../components/ui/CategoryGrid';
 import ProductCardVertical from '../../components/ui/ProductCardVertical';
 import ProductCardHorizontal from '../../components/ui/ProductCardHorizontal';
 import FeatureFooter from '../../components/ui/FeatureFooter';
@@ -47,15 +46,6 @@ export default function HomePage() {
     setSearchParams(searchParams);
   };
 
-  const handleCategorySelect = (cat) => {
-    if (cat === 'Semua') {
-      searchParams.delete('category');
-    } else {
-      searchParams.set('category', cat);
-    }
-    setSearchParams(searchParams);
-  };
-
   return (
     <div className="max-w-7xl mx-auto md:py-2">
       
@@ -76,7 +66,6 @@ export default function HomePage() {
       </div>
 
       <HeroBanner />
-      <CategoryGrid onSelectCategory={handleCategorySelect} selectedCategory={category} />
 
       {/* PRODUK TERBARU */}
       <div className="px-4 md:px-6 mb-8">

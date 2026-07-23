@@ -13,10 +13,11 @@ import PesananPage from '../pages/customer/PesananPage';
 import ProductDetailPage from '../pages/customer/ProductDetailPage';
 
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
-import AdminDataProdukPage from '../pages/admin/AdminDataProdukPage'; // We will create this
+import AdminDataProdukPage from '../pages/admin/AdminDataProdukPage';
 import AdminOrdersPage from '../pages/admin/AdminOrdersPage';
 import AdminLoginPage from '../pages/admin/AdminLoginPage';
 import AdminSuratJalanPage from '../pages/admin/AdminSuratJalanPage';
+import AdminLaporanPage from '../pages/admin/AdminLaporanPage';
 
 export default function AppRoutes() {
   return (
@@ -44,7 +45,20 @@ export default function AppRoutes() {
         <Route path="produk" element={<AdminDataProdukPage />} />
         <Route path="pesanan" element={<AdminOrdersPage />} />
         <Route path="surat-jalan" element={<AdminSuratJalanPage />} />
-        {/* Other routes can be added here later */}
+        <Route path="laporan" element={<AdminLaporanPage />} />
+        <Route path="users" element={
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Manajemen User</h1>
+            <p className="text-sm text-gray-500">Fitur kelola pengguna admin & pembeli UdinFresh.</p>
+          </div>
+        } />
+        <Route path="pengaturan" element={
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Pengaturan Sistem</h1>
+            <p className="text-sm text-gray-500">Konfigurasi alamat toko, metode pembayaran, dan toko UdinFresh.</p>
+          </div>
+        } />
+        <Route path="*" element={<AdminDashboardPage />} />
       </Route>
     </Routes>
   );
