@@ -54,6 +54,7 @@ export default function CheckoutPage() {
 
   const [paymentMethod, setPaymentMethod] = useState('transfer_bank');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState('idle'); // idle | processing | success
   const [errors, setErrors] = useState({});
 
   // Calculations
@@ -126,10 +127,31 @@ export default function CheckoutPage() {
       // Hapus item yang sudah di-checkout dari keranjang
       selectedItems.forEach((item) => cartActions.removeItem(item.cartItemId));
 
-      navigate('/pesanan');
+      // Tampilkan animasi pembayaran interaktif
+      setPaymentStatus('processing');
+      
+      setTimeout(async () => {
+        try {
+          // Panggil API bayar agar status pesanan otomatis menjadi 'Menunggu Konfirmasi'
+          await fetch(`${API_URL}/api/pesanan/${data.id_pesanan}/bayar`, { method: 'PUT' });
+          
+          // Ubah status ke success
+          setPaymentStatus('success');
+          
+          // Beri jeda 1.5 detik agar pengguna melihat animasi success sebelum redirect
+          setTimeout(() => {
+            navigate('/pesanan');
+            setIsSubmitting(false);
+          }, 1500);
+        } catch (e) {
+          console.error(e);
+          navigate('/pesanan');
+          setIsSubmitting(false);
+        }
+      }, 2000);
+
     } catch (err) {
       alert(`Gagal: ${err.message}`);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -489,6 +511,46 @@ export default function CheckoutPage() {
 
         </div>
       </form>
+
+      {/* Interactive Payment Modal */}
+      {paymentStatus !== 'idle' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 flex flex-col items-center text-center shadow-2xl transform transition-all duration-300 scale-100 opacity-100">
+            {paymentStatus === 'processing' ? (
+              <>
+                <div className="relative w-24 h-24 mb-6">
+                  <div className="absolute inset-0 border-4 border-emerald-100 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-emerald-500 rounded-full border-t-transparent animate-spin"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-emerald-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                </div>
+                <h3 className="text-xl font-extrabold text-gray-900 mb-2">Memproses Pembayaran</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  Mohon tunggu sebentar, sistem sedang memverifikasi pembayaran Anda secara otomatis...
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6 text-emerald-500 scale-in-center shadow-inner">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-extrabold text-gray-900 mb-2">Pembayaran Berhasil!</h3>
+                <p className="text-gray-500 text-sm leading-relaxed mb-1">
+                  Pesanan Anda telah dibayar dan kini masuk ke antrean.
+                </p>
+                <p className="text-emerald-600 font-bold text-sm">
+                  Status: Menunggu Konfirmasi Admin
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

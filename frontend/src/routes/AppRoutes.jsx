@@ -19,6 +19,9 @@ import AdminLoginPage from '../pages/admin/AdminLoginPage';
 import AdminSuratJalanPage from '../pages/admin/AdminSuratJalanPage';
 import AdminLaporanPage from '../pages/admin/AdminLaporanPage';
 
+import SupirLoginPage from '../pages/driver/SupirLoginPage';
+import SupirDashboardPage from '../pages/driver/SupirDashboardPage';
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -60,6 +63,10 @@ export default function AppRoutes() {
         } />
         <Route path="*" element={<AdminDashboardPage />} />
       </Route>
+
+      {/* 🚚 Kelompok Halaman Supir */}
+      <Route path="/supir/login" element={<SupirLoginPage />} />
+      <Route path="/supir/dashboard" element={<SupirDashboardPage />} />
     </Routes>
   );
 }

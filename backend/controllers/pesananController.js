@@ -222,3 +222,22 @@ export const konfirmasiPesanan = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// FUNGSI 6: Membatalkan Pesanan (Oleh Customer / Admin)
+export const batalkanPesanan = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [updateResult] = await db.query(
+      "UPDATE pesanan SET status_pesanan = 'Dibatalkan' WHERE id_pesanan = ? AND status_pesanan NOT IN ('Dikirim', 'Sedang Dikirim', 'Selesai', 'Dibatalkan')",
+      [id]
+    );
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(400).json({ success: false, message: "Pesanan tidak ditemukan atau tidak dapat dibatalkan pada tahap ini." });
+    }
+
+    return res.status(200).json({ success: true, message: "Pesanan berhasil dibatalkan." });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};

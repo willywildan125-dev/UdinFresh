@@ -8,6 +8,7 @@ import detailPesananRoutes from './routes/detailPesananRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import suratJalanRoutes from './routes/suratJalanRoutes.js';
+import supirRoutes from './routes/supirRoutes.js';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use('/api/detail-pesanan', detailPesananRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/surat-jalan', suratJalanRoutes);
+app.use('/api/supir', supirRoutes);
 
 // Jalur tes awal di browser
 app.get('/', (req, res) => {

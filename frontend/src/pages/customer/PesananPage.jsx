@@ -51,7 +51,7 @@ function StatusBadge({ statusKey }) {
   );
 }
 
-function OrderCard({ order, statusKey, onDetail, onPay }) {
+function OrderCard({ order, statusKey, onDetail, onPay, onCancel }) {
   const firstItem = order.items[0];
   const extraCount = order.items.length - 1;
   const totalPayment = order.items.reduce((sum, i) => sum + i.subtotal, 0);
@@ -133,7 +133,10 @@ function OrderCard({ order, statusKey, onDetail, onPay }) {
             </button>
           )}
           {statusKey === 'diproses' && (
-            <button className="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
+            <button 
+              onClick={() => onCancel(order.id_pesanan)}
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+            >
               Batalkan
             </button>
           )}
@@ -267,6 +270,25 @@ export default function PesananPage() {
     }
   };
 
+  const handleCancel = async (id_pesanan) => {
+    if (!window.confirm("Apakah Anda yakin ingin membatalkan pesanan ini?")) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/api/pesanan/${id_pesanan}/batal`, {
+        method: 'PUT'
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Pesanan berhasil dibatalkan!');
+        fetchOrders();
+      } else {
+        alert(`Gagal: ${data.message}`);
+      }
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  };
+
   // Tambahkan statusKey ke tiap order
   const ordersWithKey = orders.map((o) => ({
     ...o,
@@ -370,6 +392,7 @@ export default function PesananPage() {
               statusKey={order.statusKey}
               onDetail={(o) => setDetailOrder(o)}
               onPay={handlePay}
+              onCancel={handleCancel}
             />
           ))
         )}
