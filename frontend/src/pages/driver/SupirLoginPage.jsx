@@ -1,21 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const API_URL = 'http://localhost:5000';
 
 export default function SupirLoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Redirect ke dashboard jika sudah login
+    if (localStorage.getItem('supirToken') && localStorage.getItem('udinfresh_supir')) {
+      navigate('/supir/dashboard');
+    }
+  }, [navigate]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     
-    if (!username || !password) {
-      setError('Username dan password wajib diisi.');
+    if (!email || !password) {
+      setError('Email dan password wajib diisi.');
       return;
     }
 
@@ -26,15 +33,16 @@ export default function SupirLoginPage() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ email, password })
       });
 
       const data = await res.json();
       if (data.success) {
+        localStorage.setItem('supirToken', data.token);
         localStorage.setItem('udinfresh_supir', JSON.stringify(data.data));
         navigate('/supir/dashboard');
       } else {
-        setError(data.message);
+        setError(data.message || 'Login gagal.');
       }
     } catch (err) {
       setError('Terjadi kesalahan koneksi. Coba lagi.');
@@ -71,8 +79,8 @@ export default function SupirLoginPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Email Supir</label>
               <input 
                 type="email" 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                 placeholder="Contoh: budi@udinfresh.com"
                 required

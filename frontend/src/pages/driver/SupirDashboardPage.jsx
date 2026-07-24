@@ -21,19 +21,39 @@ export default function SupirDashboardPage() {
 
   useEffect(() => {
     const supirData = localStorage.getItem('udinfresh_supir');
-    if (!supirData) {
+    const token = localStorage.getItem('supirToken');
+    
+    if (!supirData || !token || supirData === 'undefined') {
+      localStorage.removeItem('supirToken');
+      localStorage.removeItem('udinfresh_supir');
       navigate('/supir/login');
       return;
     }
-    const parsed = JSON.parse(supirData);
-    setSupir(parsed);
-    fetchOrders(parsed.id_supir);
+
+    try {
+      const parsed = JSON.parse(supirData);
+      if (!parsed || !parsed.id_supir || !parsed.nama_supir) {
+        throw new Error('Data supir tidak lengkap');
+      }
+      setSupir(parsed);
+      fetchOrders(parsed.id_supir, token);
+    } catch (err) {
+      console.error("Error parsing supir session data:", err);
+      localStorage.removeItem('supirToken');
+      localStorage.removeItem('udinfresh_supir');
+      navigate('/supir/login');
+    }
   }, [navigate]);
 
-  const fetchOrders = async (id_supir) => {
+  const fetchOrders = async (id_supir, token) => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/supir/pesanan/${id_supir}`);
+      const activeToken = token || localStorage.getItem('supirToken');
+      const res = await fetch(`${API_URL}/api/supir/pesanan/${id_supir}`, {
+        headers: {
+          'Authorization': `Bearer ${activeToken}`
+        }
+      });
       const data = await res.json();
       if (data.success) {
         setOrders(data.data);
@@ -46,6 +66,7 @@ export default function SupirDashboardPage() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('supirToken');
     localStorage.removeItem('udinfresh_supir');
     navigate('/supir/login');
   };
@@ -60,9 +81,13 @@ export default function SupirDashboardPage() {
     const id_pesanan = confirmId;
     setConfirmId(null);
     try {
+      const token = localStorage.getItem('supirToken');
       const res = await fetch(`${API_URL}/api/supir/pesanan/${id_pesanan}/selesai`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ id_supir: supir.id_supir })
       });
       const data = await res.json();

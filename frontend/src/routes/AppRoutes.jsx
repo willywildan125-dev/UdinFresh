@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
 import AdminLayout from '../layouts/AdminLayout';
@@ -65,6 +65,8 @@ export default function AppRoutes() {
       </Route>
 
       {/* 🚚 Kelompok Halaman Supir */}
+      <Route path="/supir" element={<Navigate to="/supir/dashboard" replace />} />
+      <Route path="/Supir" element={<Navigate to="/supir/dashboard" replace />} />
       <Route path="/supir/login" element={<SupirLoginPage />} />
       <Route path="/supir/dashboard" element={<SupirDashboardPage />} />
     </Routes>

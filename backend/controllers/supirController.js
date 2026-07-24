@@ -1,40 +1,66 @@
 import db from '../config/db.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'udinfresh_super_secret_key_2026';
 
 // Login Supir
-// Username menggunakan email (namadepan@udinfresh.com) dan password 'admin123'
 export const loginSupir = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, username, password } = req.body;
+  const identifier = email || username;
 
-  if (!username || !password) {
+  if (!identifier || !password) {
     return res.status(400).json({ success: false, message: 'Email dan password wajib diisi.' });
   }
 
-  if (password !== 'admin123') {
-    return res.status(401).json({ success: false, message: 'Kata sandi salah.' });
-  }
-
-  // Extract nama depan dari email
-  if (!username.endsWith('@udinfresh.com')) {
+  // Validasi domain email supir
+  if (!identifier.endsWith('@udinfresh.com')) {
     return res.status(401).json({ success: false, message: 'Gunakan email dengan domain @udinfresh.com' });
   }
 
-  const namaDepan = username.split('@')[0].trim();
-  
-  try {
-    // Cari supir yang namanya berawalan "namaDepan"
-    const [supir] = await db.query('SELECT * FROM supir WHERE nama_supir LIKE ? LIMIT 1', [`${namaDepan}%`]);
+  // Extract nama depan supir dari email
+  const namaDepan = identifier.split('@')[0].trim();
 
-    if (supir.length === 0) {
+  try {
+    // Cari supir yang namanya berawalan namaDepan
+    const [drivers] = await db.query('SELECT * FROM supir WHERE nama_supir LIKE ? LIMIT 1', [`${namaDepan}%`]);
+
+    if (drivers.length === 0) {
       return res.status(401).json({ success: false, message: 'Supir tidak ditemukan.' });
     }
+
+    const supir = drivers[0];
+
+    // Cek password supir
+    if (!supir.password) {
+      return res.status(401).json({ success: false, message: 'Password supir belum diatur. Silakan hubungi admin.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, supir.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Kata sandi salah.' });
+    }
+
+    // Buat JWT Token
+    const token = jwt.sign(
+      { id: supir.id_supir, nama: supir.nama_supir, role: 'supir' },
+      JWT_SECRET,
+      { expiresIn: '1d' }
+    );
 
     return res.status(200).json({
       success: true,
       message: 'Login berhasil.',
-      data: supir[0]
+      token,
+      data: {
+        id_supir: supir.id_supir,
+        nama_supir: supir.nama_supir,
+        nopol: supir.nopol
+      }
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    console.error('Error in loginSupir:', error);
+    return res.status(500).json({ success: false, message: 'Terjadi kesalahan pada server.' });
   }
 };
 

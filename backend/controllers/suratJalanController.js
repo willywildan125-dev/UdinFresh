@@ -2,7 +2,7 @@ import db from '../config/db.js';
 
 export const getSupir = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM supir');
+    const [rows] = await db.query('SELECT id_supir, nama_supir, nopol FROM supir');
     return res.status(200).json({ success: true, data: rows });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
