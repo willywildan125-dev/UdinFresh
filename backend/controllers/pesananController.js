@@ -155,7 +155,12 @@ export const ambilPesananPerPembeli = async (req, res) => {
 // FUNGSI 3: Mengambil Semua Pesanan (Untuk Tampilan Admin)
 export const ambilSemuaPesanan = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM pesanan ORDER BY tanggal_pesanan DESC');
+    const [rows] = await db.query(
+      `SELECT p.*, pb.nama_pembeli, pb.no_hp, pb.nama_toko
+       FROM pesanan p
+       LEFT JOIN pembeli pb ON p.id_pembeli = pb.id_pembeli
+       ORDER BY p.tanggal_pesanan DESC`
+    );
     return res.status(200).json({ success: true, data: rows });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
