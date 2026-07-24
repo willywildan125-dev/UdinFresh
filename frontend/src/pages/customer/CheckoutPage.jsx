@@ -211,7 +211,7 @@ export default function CheckoutPage() {
           {/* ─── LEFT COLUMN ─── */}
           <div className="space-y-4">
 
-            {/* Alamat Pengiriman */}
+            {/* Data Diri */}
             <section className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
                 <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center">
@@ -220,7 +220,7 @@ export default function CheckoutPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <h2 className="text-sm font-bold text-gray-800">Alamat Pengiriman</h2>
+                <h2 className="text-sm font-bold text-gray-800">Data Diri</h2>
               </div>
 
               <div className="px-5 py-4 space-y-4">
