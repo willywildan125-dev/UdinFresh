@@ -1,9 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useCart, cartActions } from '../../store/cartStore';
 
-const API_URL = 'http://localhost:5000';
+// Fix default marker icon for Leaflet + Vite/Webpack
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
+const API_URL = 'http://localhost:5000';
 const SHIPPING_COST = 25000;
 
 const PAYMENT_METHODS = [
@@ -39,6 +49,214 @@ const PAYMENT_METHODS = [
   },
 ];
 
+// ─── Sub-component: handles map click & drag events ───────────────────────────
+function MapClickHandler({ onLocationSelect }) {
+  useMapEvents({
+    click(e) {
+      onLocationSelect(e.latlng);
+    },
+  });
+  return null;
+}
+
+// ─── Sub-component: draggable marker that reports its new position ─────────────
+function DraggableMarker({ position, onDragEnd }) {
+  const markerRef = useRef(null);
+
+  const eventHandlers = {
+    dragend() {
+      const marker = markerRef.current;
+      if (marker) {
+        onDragEnd(marker.getLatLng());
+      }
+    },
+  };
+
+  return (
+    <Marker
+      draggable
+      eventHandlers={eventHandlers}
+      position={position}
+      ref={markerRef}
+    />
+  );
+}
+
+// ─── Map Modal Component ───────────────────────────────────────────────────────
+function MapModal({ isOpen, onClose, onConfirm }) {
+  const [markerPos, setMarkerPos] = useState({ lat: -7.2504, lng: 112.7688 }); // default: Surabaya
+  const [previewAddress, setPreviewAddress] = useState('');
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+
+  const fetchAddress = async (latlng) => {
+    setIsGeocoding(true);
+    setPreviewAddress('Mencari alamat...');
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latlng.lat}&lon=${latlng.lng}&addressdetails=1&accept-language=id`,
+        { headers: { 'User-Agent': 'UdinFresh/1.0' } }
+      );
+      const data = await res.json();
+      if (data && data.display_name) {
+        setPreviewAddress(data.display_name);
+      } else {
+        setPreviewAddress('Alamat tidak ditemukan');
+      }
+    } catch {
+      setPreviewAddress('Gagal mengambil alamat. Coba lagi.');
+    } finally {
+      setIsGeocoding(false);
+    }
+  };
+
+  const handleLocationSelect = (latlng) => {
+    setMarkerPos(latlng);
+    fetchAddress(latlng);
+  };
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Browser Anda tidak mendukung GPS.');
+      return;
+    }
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setMarkerPos(latlng);
+        fetchAddress(latlng);
+        setIsLocating(false);
+      },
+      () => {
+        alert('Gagal mendapatkan lokasi. Pastikan izin lokasi diaktifkan.');
+        setIsLocating(false);
+      }
+    );
+  };
+
+  const handleConfirm = () => {
+    if (previewAddress && previewAddress !== 'Mencari alamat...' && previewAddress !== 'Alamat tidak ditemukan') {
+      onConfirm(previewAddress);
+      onClose();
+    } else {
+      alert('Silakan klik lokasi di peta terlebih dahulu.');
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden"
+        style={{ maxHeight: '90vh' }}>
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-emerald-50 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Pilih Lokasi di Peta</h3>
+              <p className="text-xs text-gray-500">Klik atau geser pin untuk menentukan alamat</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Gunakan Lokasi Saya Button */}
+        <div className="px-5 pt-3 pb-2">
+          <button
+            type="button"
+            onClick={handleUseMyLocation}
+            disabled={isLocating}
+            className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-lg hover:bg-emerald-100 transition-colors disabled:opacity-60"
+          >
+            {isLocating ? (
+              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+            {isLocating ? 'Mencari lokasi Anda...' : 'Gunakan Lokasi Saya (GPS)'}
+          </button>
+        </div>
+
+        {/* Map */}
+        <div className="flex-1 mx-5 rounded-xl overflow-hidden border border-gray-200" style={{ height: '340px' }}>
+          <MapContainer
+            center={[markerPos.lat, markerPos.lng]}
+            zoom={13}
+            style={{ height: '100%', width: '100%' }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <MapClickHandler onLocationSelect={handleLocationSelect} />
+            <DraggableMarker position={[markerPos.lat, markerPos.lng]} onDragEnd={handleLocationSelect} />
+          </MapContainer>
+        </div>
+
+        {/* Address Preview */}
+        <div className="mx-5 mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 min-h-[52px] flex items-start gap-2">
+          {isGeocoding ? (
+            <svg className="animate-spin h-4 w-4 text-emerald-500 mt-0.5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          )}
+          <p className="text-xs text-gray-600 leading-relaxed">
+            {previewAddress || 'Klik pada peta atau geser pin untuk mendapatkan alamat otomatis.'}
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-3 px-5 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            disabled={!previewAddress || isGeocoding}
+            className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Gunakan Alamat Ini
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main CheckoutPage ─────────────────────────────────────────────────────────
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cart } = useCart();
@@ -56,6 +274,7 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('idle'); // idle | processing | success
   const [errors, setErrors] = useState({});
+  const [isMapOpen, setIsMapOpen] = useState(false);
 
   // Calculations
   const subtotal = selectedItems.reduce(
@@ -72,6 +291,11 @@ export default function CheckoutPage() {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+  };
+
+  const handleAddressFromMap = (address) => {
+    setForm((prev) => ({ ...prev, address }));
+    if (errors.address) setErrors((prev) => ({ ...prev, address: '' }));
   };
 
   const validate = () => {
@@ -94,7 +318,6 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
     try {
-      // Siapkan payload sesuai struktur backend
       const items = selectedItems.map((item) => ({
         id_produk: item.productId,
         jumlah: item.quantity,
@@ -121,24 +344,15 @@ export default function CheckoutPage() {
         throw new Error(data.message || 'Gagal membuat pesanan.');
       }
 
-      // Simpan no_hp ke localStorage agar PesananPage bisa fetch pesanan milik user ini
       localStorage.setItem('udinfresh_user_phone', form.phone);
-
-      // Hapus item yang sudah di-checkout dari keranjang
       selectedItems.forEach((item) => cartActions.removeItem(item.cartItemId));
 
-      // Tampilkan animasi pembayaran interaktif
       setPaymentStatus('processing');
-      
+
       setTimeout(async () => {
         try {
-          // Panggil API bayar agar status pesanan otomatis menjadi 'Menunggu Konfirmasi'
           await fetch(`${API_URL}/api/pesanan/${data.id_pesanan}/bayar`, { method: 'PUT' });
-          
-          // Ubah status ke success
           setPaymentStatus('success');
-          
-          // Beri jeda 1.5 detik agar pengguna melihat animasi success sebelum redirect
           setTimeout(() => {
             navigate('/pesanan');
             setIsSubmitting(false);
@@ -204,6 +418,13 @@ export default function CheckoutPage() {
         <h1 className="text-base font-bold text-gray-900 ml-3">Checkout</h1>
       </header>
 
+      {/* Map Modal */}
+      <MapModal
+        isOpen={isMapOpen}
+        onClose={() => setIsMapOpen(false)}
+        onConfirm={handleAddressFromMap}
+      />
+
       {/* Body */}
       <form onSubmit={handleSubmit}>
         <div className="max-w-5xl mx-auto px-4 py-5 md:py-6 grid grid-cols-1 md:grid-cols-[1fr_380px] gap-4 md:gap-6 items-start">
@@ -224,11 +445,11 @@ export default function CheckoutPage() {
               </div>
 
               <div className="px-5 py-4 space-y-4">
-                {/* Row: Full Name + Store Name */}
+                {/* Row: Nama Lengkap + Nama Toko */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                      Full Name <span className="text-red-500">*</span>
+                      Nama Lengkap <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -246,7 +467,7 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                      Store Name <span className="text-gray-400 font-normal">(Optional)</span>
+                      Nama Toko <span className="text-gray-400 font-normal">(Opsional)</span>
                     </label>
                     <input
                       type="text"
@@ -259,10 +480,10 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Phone */}
+                {/* Nomor Telepon */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                    Phone Number <span className="text-red-500">*</span>
+                    Nomor Telepon <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
@@ -279,23 +500,45 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
-                {/* Full Address */}
+                {/* Alamat Lengkap */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                    Full Address <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-gray-600">
+                      Alamat Lengkap <span className="text-red-500">*</span>
+                    </label>
+                    {/* Tombol Pilih dari Peta */}
+                    <button
+                      type="button"
+                      onClick={() => setIsMapOpen(true)}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg hover:bg-emerald-100 active:scale-95 transition-all"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      Pilih dari Peta
+                    </button>
+                  </div>
                   <textarea
                     name="address"
                     value={form.address}
                     onChange={handleChange}
                     rows={3}
-                    placeholder="Jl. Nama Jalan No. xx, RT/RW, Kelurahan, Kecamatan, Kota, Kode Pos"
+                    placeholder="Klik 'Pilih dari Peta' atau ketik manual: Jl. Nama Jalan No. xx, Kelurahan, Kecamatan, Kota"
                     className={`w-full px-3 py-2.5 text-sm border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all resize-none ${
                       errors.address ? 'border-red-400 bg-red-50' : 'border-gray-200'
                     }`}
                   />
                   {errors.address && (
                     <p className="text-xs text-red-500 mt-1">{errors.address}</p>
+                  )}
+                  {form.address && (
+                    <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Alamat berhasil diisi
+                    </p>
                   )}
                 </div>
               </div>
@@ -366,7 +609,7 @@ export default function CheckoutPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </label>
-                      
+
                       {/* Payment Method Details Expand */}
                       {isActive && (
                         <div className="pl-14 pr-3 py-4 text-sm bg-emerald-50/40 rounded-b-lg -mx-3 -mt-2 mb-1 border-t border-emerald-100/50">
