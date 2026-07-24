@@ -227,7 +227,7 @@ export default function AdminSuratJalanPage() {
                   <td className="px-6 py-4">{order.total_berat} kg</td>
                   <td className="px-6 py-4 min-w-[220px]">
                     <select
-                      value={selectedSupir[order.id_pesanan]?.id || ''}
+                      value={selectedSupir[order.id_pesanan]?.id_supir || ''}
                       onChange={(e) => handlePilihSupir(order.id_pesanan, e.target.value)}
                       className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white"
                     >

@@ -16,6 +16,9 @@ export default function AdminDataProdukPage() {
   
   // State untuk mode edit
   const [editingId, setEditingId] = useState(null);
+  
+  // State untuk konfirmasi hapus
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, productId: null });
 
   // Fetch all products
   const fetchProducts = async () => {
@@ -113,8 +116,13 @@ export default function AdminDataProdukPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus produk ini?")) return;
+  const requestDelete = (id) => {
+    setDeleteModal({ isOpen: true, productId: id });
+  };
+
+  const confirmDelete = async () => {
+    const id = deleteModal.productId;
+    setDeleteModal({ isOpen: false, productId: null });
     
     try {
       const response = await fetch(`http://localhost:5000/api/produk/${id}`, {
@@ -318,7 +326,7 @@ export default function AdminDataProdukPage() {
                           </svg>
                         </button>
                         <button 
-                          onClick={() => handleDelete(p.id_produk)}
+                          onClick={() => requestDelete(p.id_produk)}
                           className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-colors"
                           title="Hapus Produk"
                         >
@@ -335,6 +343,39 @@ export default function AdminDataProdukPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 shadow-xl max-w-sm w-full mx-4 border border-gray-100">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Hapus Produk?</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => setDeleteModal({ isOpen: false, productId: null })}
+                  className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 py-2.5 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors shadow-sm shadow-red-500/30"
+                >
+                  Ya, Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

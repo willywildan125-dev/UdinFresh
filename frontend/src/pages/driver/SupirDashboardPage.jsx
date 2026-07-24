@@ -54,7 +54,7 @@ function Toast({ toast, onClose }) {
 }
 
 // ─── Order Card ────────────────────────────────────────────────────────────
-function OrderCard({ order, onUpdateStatus, onGagalKirim, onLihatDetail }) {  
+function OrderCard({ order, onUpdateStatus, onGagalKirim, onLihatDetail, onTelepon }) {  
   const hp = order.hp_pembeli?.replace(/^0/, '62');
   const statusSelesai = order.status_pesanan === 'Selesai' || order.status_pesanan === 'Gagal Kirim';
 
@@ -107,13 +107,13 @@ function OrderCard({ order, onUpdateStatus, onGagalKirim, onLihatDetail }) {
                 WA
               </a>
               {/* Telepon */}
-              <a
-                href={`tel:${order.hp_pembeli}`}
+              <button
+                onClick={(e) => { e.preventDefault(); onTelepon(order.hp_pembeli); }}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm rounded-xl transition-colors border border-blue-200"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                 Telepon
-              </a>
+              </button>
               {/* Google Maps */}
               <a
                 href={`https://maps.google.com/?q=${encodeURIComponent(order.nama_toko + ' ' + order.nama_pembeli)}`}
@@ -171,6 +171,7 @@ function OrderCard({ order, onUpdateStatus, onGagalKirim, onLihatDetail }) {
 // ─── Proof of Delivery Modal ───────────────────────────────────────────────
 function PoDAModal({ order, onClose, onConfirm }) {
   const [namaPenerima, setNamaPenerima] = useState('');
+  const [error, setError] = useState('');
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSig, setHasSig] = useState(false);
@@ -208,7 +209,7 @@ function PoDAModal({ order, onClose, onConfirm }) {
   };
 
   const handleConfirm = () => {
-    if (!namaPenerima.trim()) { alert('Mohon isi nama penerima.'); return; }
+    if (!namaPenerima.trim()) { setError('Mohon isi nama penerima.'); return; }
     onConfirm(order.id_pesanan, namaPenerima);
     onClose();
   };
@@ -236,10 +237,11 @@ function PoDAModal({ order, onClose, onConfirm }) {
             <input
               type="text"
               value={namaPenerima}
-              onChange={(e) => setNamaPenerima(e.target.value)}
+              onChange={(e) => { setNamaPenerima(e.target.value); setError(''); }}
               placeholder="Misal: Pak RT, Satpam, Ibu Sari..."
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              className={`w-full px-4 py-3 border rounded-xl text-sm focus:ring-2 outline-none ${error ? 'border-red-400 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:ring-emerald-500 focus:border-emerald-500'}`}
             />
+            {error && <p className="text-red-500 text-xs mt-1.5 font-medium">{error}</p>}
           </div>
 
           {/* Tanda tangan */}
@@ -288,6 +290,7 @@ function PoDAModal({ order, onClose, onConfirm }) {
 function GagalModal({ pesananId, onClose, onConfirm }) {
   const [alasan, setAlasan] = useState('');
   const [custom, setCustom] = useState('');
+  const [error, setError] = useState('');
 
   const handleConfirm = () => {
     const finalAlasan = alasan === 'Lainnya' ? custom : alasan;
@@ -312,7 +315,7 @@ function GagalModal({ pesananId, onClose, onConfirm }) {
           <div className="space-y-2">
             {ALASAN_GAGAL.map((a) => (
               <label key={a} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${alasan === a ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                <input type="radio" name="alasan" value={a} checked={alasan === a} onChange={() => setAlasan(a)} className="accent-red-600" />
+                <input type="radio" name="alasan" value={a} checked={alasan === a} onChange={() => { setAlasan(a); setError(''); }} className="accent-red-600" />
                 <span className="text-sm font-medium text-gray-700">{a}</span>
               </label>
             ))}
@@ -321,11 +324,12 @@ function GagalModal({ pesananId, onClose, onConfirm }) {
             <input
               type="text"
               value={custom}
-              onChange={(e) => setCustom(e.target.value)}
+              onChange={(e) => { setCustom(e.target.value); setError(''); }}
               placeholder="Tulis alasan lainnya..."
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+              className={`w-full px-4 py-3 border rounded-xl text-sm focus:ring-2 outline-none ${error ? 'border-red-400 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:ring-red-500 focus:border-red-500'}`}
             />
           )}
+          {error && <p className="text-red-500 text-xs font-medium">{error}</p>}
           <button
             onClick={handleConfirm}
             className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-2xl transition-colors"
@@ -400,6 +404,29 @@ function RiwayatTab({ idSupir }) {
   );
 }
 
+// ─── Telepon Modal ─────────────────────────────────────────────────────────
+function TeleponModal({ hp, onClose }) {
+  const handleCopy = () => {
+    navigator.clipboard.writeText(hp);
+    onClose(true);
+  };
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-xs rounded-3xl shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200">
+        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+        </div>
+        <h3 className="text-lg font-bold text-gray-900 mb-1">Nomor Telepon</h3>
+        <p className="text-2xl font-bold text-blue-600 tracking-wider mb-6">{hp}</p>
+        <div className="flex gap-3">
+          <button onClick={() => onClose(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors">Tutup</button>
+          <button onClick={handleCopy} className="flex-1 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/30">Salin</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ────────────────────────────────────────────────────────
 export default function SupirDashboardPage() {
   const navigate = useNavigate();
@@ -410,6 +437,7 @@ export default function SupirDashboardPage() {
   const [toast, setToast] = useState(null);
   const [podOrder, setPodOrder] = useState(null); // order for PoD modal
   const [gagalId, setGagalId] = useState(null);  // id_pesanan for gagal modal
+  const [teleponModal, setTeleponModal] = useState(null); // stores hp_pembeli
 
   const showToast = (type, message) => {
     setToast({ type, message });
@@ -530,6 +558,17 @@ export default function SupirDashboardPage() {
           pesananId={gagalId}
           onClose={() => setGagalId(null)}
           onConfirm={handleGagalKirim}
+        />
+      )}
+
+      {/* Telepon Modal */}
+      {teleponModal && (
+        <TeleponModal
+          hp={teleponModal}
+          onClose={(copied) => {
+            setTeleponModal(null);
+            if (copied) showToast('success', 'Nomor telepon disalin ke papan klip');
+          }}
         />
       )}
 
@@ -663,6 +702,7 @@ export default function SupirDashboardPage() {
                       onUpdateStatus={handleUpdateStatus}
                       onGagalKirim={(id) => setGagalId(id)}
                       onLihatDetail={(o) => setPodOrder(o)}
+                      onTelepon={(hp) => setTeleponModal(hp)}
                     />
                   ))}
                 </div>

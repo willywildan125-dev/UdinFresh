@@ -47,13 +47,36 @@ export const buatPesanan = async (req, res) => {
     );
     const id_pesanan = pesananResult.insertId;
 
-    // Step 3: Masukkan item-item ke detail_pesanan
-    const detailValues = items.map(item => [
-      id_pesanan,
-      item.id_produk,
-      item.jumlah,
-      item.subtotal
-    ]);
+    // Step 3: Masukkan item-item ke detail_pesanan & Kurangi Stok
+    const detailValues = [];
+    for (const item of items) {
+      const [produkRows] = await connection.query(
+        'SELECT stok, nama_produk FROM produk WHERE id_produk = ? FOR UPDATE',
+        [item.id_produk]
+      );
+
+      if (produkRows.length === 0) {
+        throw new Error(`Produk dengan ID ${item.id_produk} tidak ditemukan.`);
+      }
+
+      const produk = produkRows[0];
+      if (produk.stok < item.jumlah) {
+        throw new Error(`Stok ${produk.nama_produk} tidak mencukupi (Tersisa: ${produk.stok}, Diminta: ${item.jumlah}).`);
+      }
+
+      await connection.query(
+        'UPDATE produk SET stok = stok - ? WHERE id_produk = ?',
+        [item.jumlah, item.id_produk]
+      );
+
+      detailValues.push([
+        id_pesanan,
+        item.id_produk,
+        item.jumlah,
+        item.subtotal
+      ]);
+    }
+
     await connection.query(
       'INSERT INTO detail_pesanan (id_pesanan, id_produk, jumlah, subtotal) VALUES ?',
       [detailValues]
@@ -231,18 +254,39 @@ export const konfirmasiPesanan = async (req, res) => {
 // FUNGSI 6: Membatalkan Pesanan (Oleh Customer / Admin)
 export const batalkanPesanan = async (req, res) => {
   const { id } = req.params;
+  const connection = await db.getConnection();
   try {
-    const [updateResult] = await db.query(
+    await connection.beginTransaction();
+
+    const [updateResult] = await connection.query(
       "UPDATE pesanan SET status_pesanan = 'Dibatalkan' WHERE id_pesanan = ? AND status_pesanan NOT IN ('Dikirim', 'Sedang Dikirim', 'Selesai', 'Dibatalkan')",
       [id]
     );
 
     if (updateResult.affectedRows === 0) {
-      return res.status(400).json({ success: false, message: "Pesanan tidak ditemukan atau tidak dapat dibatalkan pada tahap ini." });
+      throw new Error("Pesanan tidak ditemukan atau tidak dapat dibatalkan pada tahap ini.");
     }
 
+    // Kembalikan stok
+    const [details] = await connection.query(
+      "SELECT id_produk, jumlah FROM detail_pesanan WHERE id_pesanan = ?",
+      [id]
+    );
+    
+    for (const item of details) {
+      await connection.query(
+        "UPDATE produk SET stok = stok + ? WHERE id_produk = ?",
+        [item.jumlah, item.id_produk]
+      );
+    }
+
+    await connection.commit();
     return res.status(200).json({ success: true, message: "Pesanan berhasil dibatalkan." });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    await connection.rollback();
+    const status = error.message.includes("tidak ditemukan atau tidak dapat dibatalkan") ? 400 : 500;
+    return res.status(status).json({ success: false, message: error.message });
+  } finally {
+    connection.release();
   }
 };
