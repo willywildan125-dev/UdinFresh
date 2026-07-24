@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import * as XLSX from 'xlsx';
 
 export default function AdminLaporanPage() {
   const [orders, setOrders] = useState([]);
@@ -76,43 +77,49 @@ export default function AdminLaporanPage() {
     return totalCompletedOrders > 0 ? Math.round(totalRevenue / totalCompletedOrders) : 0;
   }, [totalRevenue, totalCompletedOrders]);
 
-  // Export to Excel / CSV Function
+  // Export to Excel (.xlsx)
   const exportToExcel = () => {
     if (filteredOrders.length === 0) {
       alert('Tidak ada data laporan untuk diekspor.');
       return;
     }
 
-    // CSV Header
-    const headers = ['No', 'ID Pesanan', 'Tanggal Transaksi', 'Nama Pembeli', 'Metode Pembayaran', 'Jumlah Item', 'Total Harga (Rp)', 'Status'];
-
-    // CSV Rows
-    const rows = filteredOrders.map((ord, idx) => [
-      idx + 1,
-      `"${ord.id_pesanan ? 'ORD-' + ord.id_pesanan : '-'}"`,
-      `"${ord.tanggal_pesanan ? new Date(ord.tanggal_pesanan).toLocaleDateString('id-ID') : (ord.tanggal || '-')}"`,
-      `"${ord.nama_pembeli || ord.nama_pemesan || 'Pelanggan'}"`,
-      `"${ord.metode_pembayaran || 'QRIS'}"`,
-      ord.item_count || ord.total_item || 1,
-      ord.total_harga || ord.subtotal || 150000,
-      `"${ord.status_pesanan || ord.status || 'Selesai'}"`,
-    ]);
-
-    // Construct CSV Content with BOM for Excel UTF-8 Compatibility
-    const csvContent =
-      '\uFEFF' +
-      [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
-
-    // Trigger File Download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
     const today = new Date().toISOString().split('T')[0];
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Laporan_Pendapatan_UdinFresh_${today}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    // Baris data
+    const rows = filteredOrders.map((ord, idx) => ({
+      'No': idx + 1,
+      'ID Pesanan': ord.id_pesanan ? `ORD-${String(ord.id_pesanan).padStart(5, '0')}` : '-',
+      'Tanggal Transaksi': ord.tanggal_pesanan
+        ? new Date(ord.tanggal_pesanan).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+        : (ord.tanggal || '-'),
+      'Nama Pembeli': ord.nama_pembeli || ord.nama_pemesan || 'Pelanggan',
+      'Metode Pembayaran': ord.metode_pembayaran || 'QRIS',
+      'Jumlah Item': ord.item_count || ord.total_item || 1,
+      'Total Harga (Rp)': ord.total_harga || ord.subtotal || 150000,
+      'Status': ord.status_pesanan || ord.status || 'Selesai',
+    }));
+
+    // Buat worksheet & workbook
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    // Atur lebar kolom otomatis
+    worksheet['!cols'] = [
+      { wch: 5 },  // No
+      { wch: 14 }, // ID Pesanan
+      { wch: 22 }, // Tanggal
+      { wch: 24 }, // Nama Pembeli
+      { wch: 20 }, // Metode
+      { wch: 12 }, // Jumlah Item
+      { wch: 18 }, // Total Harga
+      { wch: 18 }, // Status
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Laporan Pendapatan');
+
+    // Unduh file .xlsx
+    XLSX.writeFile(workbook, `Laporan_Pendapatan_UdinFresh_${today}.xlsx`);
   };
 
   // Print function
@@ -149,7 +156,7 @@ export default function AdminLaporanPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Ekspor ke Excel (.csv)
+            Ekspor ke Excel (.xlsx)
           </button>
         </div>
       </div>
@@ -323,7 +330,7 @@ export default function AdminLaporanPage() {
         {/* Footer info */}
         <div className="p-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500">
           <span>Menampilkan <b>{filteredOrders.length}</b> transaksi</span>
-          <span>Klik tombol <b>Ekspor ke Excel</b> di atas untuk mengunduh laporan format .csv / Excel</span>
+          <span>Klik tombol <b>Ekspor ke Excel</b> di atas untuk mengunduh laporan format .xlsx (Microsoft Excel)</span>
         </div>
       </div>
     </div>
